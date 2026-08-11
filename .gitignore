@@ -1,0 +1,6 @@
+/cache/
+/out/
+/broadcast/
+/.idea/
+/.vscode/
+*.env
