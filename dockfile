@@ -1,0 +1,11 @@
+FROM ghcr.io/foundry-rs/foundry:v1.7.1
+
+LABEL org.opencontainers.image.title="NettedX Anvil Private Chain"
+LABEL org.opencontainers.image.description="Local Anvil chain for the NettedX hackathon project"
+LABEL org.opencontainers.image.source="https://github.com/NettedX/NettedX-Blockchain"
+
+EXPOSE 8545
+VOLUME ["/anvil-data"]
+
+ENTRYPOINT ["anvil"]
+CMD ["--host", "0.0.0.0", "--port", "8545", "--chain-id", "31337", "--accounts", "10", "--balance", "10000", "--mnemonic", "test test test test test test test test test test test junk", "--state", "/anvil-data/state.json", "--state-interval", "5"]
