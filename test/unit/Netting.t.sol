@@ -10,6 +10,7 @@ import {Settlement} from "../../src/core/Settlement.sol";
 import {Netting} from "../../src/core/Netting.sol";
 import {LiquidityPool} from "../../src/core/LiquidityPool.sol";
 import {Types} from "../../src/libraries/Types.sol";
+import {Errors} from "../../src/libraries/Errors.sol";
 
 contract NettingTest is Test {
     MockUSDC usdc;
@@ -93,6 +94,21 @@ contract NettingTest is Test {
         assertEq(trade.bondAmount, 5);
     }
 
+    function testAcceptsTradeInTenthBlock() public {
+        vm.roll(netting.windowStartBlock() + 9);
+
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        assertEq(netting.tradeCount(0), 1);
+    }
+
+    function testRejectsTradeFromEleventhBlock() public {
+        vm.roll(netting.windowStartBlock() + 10);
+
+        vm.expectRevert(Errors.WindowClosed.selector);
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+    }
+
     // ============================================================
     // 3. Submit trade does not move assets
     // ============================================================
@@ -124,15 +140,28 @@ contract NettingTest is Test {
     }
 
     // ============================================================
-    // 5. Cannot execute before window closes
+    // 5. Cannot execute before settlement block
     // ============================================================
 
-    function testCannotExecuteBeforeWindowCloses() public {
+    function testCannotExecuteBeforeSettlementBlock() public {
         netting.submitTrade(alice, bob, 500 * USDC, 5);
 
-        vm.expectRevert();
+        vm.expectRevert(Errors.SettlementNotReady.selector);
 
         netting.executeWindow();
+    }
+
+    function testCannotSettleInBlocksElevenToThirteen() public {
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        uint256 startBlock = netting.windowStartBlock();
+
+        for (uint256 offset = 10; offset <= 12; offset++) {
+            vm.roll(startBlock + offset);
+
+            vm.expectRevert(Errors.SettlementNotReady.selector);
+            netting.executeWindow();
+        }
     }
 
     // ============================================================
@@ -143,6 +172,7 @@ contract NettingTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+        vm.roll(netting.windowStartBlock() + 13);
 
         vm.prank(alice);
 
@@ -201,6 +231,7 @@ contract NettingTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+        vm.roll(netting.windowStartBlock() + 13);
 
         netting.executeWindow();
 
@@ -225,6 +256,7 @@ contract NettingTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+        vm.roll(netting.windowStartBlock() + 13);
 
         netting.executeWindow();
 
@@ -233,6 +265,21 @@ contract NettingTest is Test {
         assertEq(netting.tradeCount(0), 0);
 
         assertEq(netting.tradeCount(1), 0);
+    }
+
+    function testNextWindowStartsAfterSettlementBlock() public {
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        vm.roll(netting.windowStartBlock() + 13);
+        netting.executeWindow();
+
+        vm.expectRevert(Errors.WindowClosed.selector);
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        vm.roll(netting.windowStartBlock());
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        assertEq(netting.tradeCount(1), 1);
     }
 
     // ============================================================
@@ -283,6 +330,7 @@ contract NettingTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+        vm.roll(netting.windowStartBlock() + 13);
 
         netting.executeWindow();
 

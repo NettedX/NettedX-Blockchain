@@ -161,6 +161,8 @@ contract EndToEndTest is Test {
 
         assertEq(netting.blocksRemaining(), 0);
 
+        vm.roll(netting.windowStartBlock() + 13);
+
         // ==================================================
         // 5. Execute Window
         // ==================================================
@@ -249,6 +251,8 @@ contract EndToEndTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+
+        vm.roll(netting.windowStartBlock() + 13);
 
         // ==================================================
         // 5. Execute settlement
