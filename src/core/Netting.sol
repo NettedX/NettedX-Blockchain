@@ -146,12 +146,15 @@ contract Netting is Ownable {
         return _calculateNetPositions(currentWindowId);
     }
 
+    /**
+     * @notice Return public analytics metrics for the current window.
+     */
     function getPublicAnalyticsMetrics()
         external
         view
         returns (
             uint256 totalSettlementAmount,
-            uint256 netSettlementCount,
+            uint256 totalTradeCount,
             uint256 liquiditySaved,
             uint256 obligationReduction
         )
@@ -160,12 +163,14 @@ contract Netting is Ownable {
 
         Types.Trade[] storage windowTrades = trades[windowId];
 
+        totalTradeCount = windowTrades.length;
+
         for (uint256 i = 0; i < windowTrades.length; i++) {
             totalSettlementAmount += windowTrades[i].cashAmount;
         }
 
         if (totalSettlementAmount == 0) {
-            return (0, 0, 0, 0);
+            return (0, totalTradeCount, 0, 0);
         }
 
         Types.NetPosition[] memory positions = _calculateNetPositions(windowId);
@@ -175,7 +180,6 @@ contract Netting is Ownable {
         for (uint256 i = 0; i < positions.length; i++) {
             if (positions[i].asset == cashToken && positions[i].amount < 0) {
                 netSettlementAmount += uint256(-positions[i].amount);
-                netSettlementCount++;
             }
         }
 
