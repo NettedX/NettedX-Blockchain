@@ -337,22 +337,22 @@ contract NettingTest is Test {
         assertEq(netting.currentWindowId(), 1);
     }
 
-    function testGetDashboardMetrics() public {
+    function testGetPublicAnalyticsMetricsEmptyWindow() public {
         (
             uint256 totalSettlementAmount,
-            uint256 netSettlementCount,
+            uint256 totalTradeCount,
             uint256 liquiditySaved,
             uint256 obligationReduction
         ) = netting.getPublicAnalyticsMetrics();
 
         assertEq(totalSettlementAmount, 0);
 
-        assertEq(netSettlementCount, 0);
+        assertEq(totalTradeCount, 0);
         assertEq(liquiditySaved, 0);
         assertEq(obligationReduction, 0);
     }
 
-    function testDashboardMetrics() public {
+    function testGetPublicAnalyticsMetrics() public {
         // Alice -> Bob: 500 USDC
         netting.submitTrade(alice, bob, 500 * USDC, 5);
 
@@ -364,7 +364,7 @@ contract NettingTest is Test {
 
         (
             uint256 totalSettlementAmount,
-            uint256 netSettlementCount,
+            uint256 totalTradeCount,
             uint256 liquiditySaved,
             uint256 obligationReduction
         ) = netting.getPublicAnalyticsMetrics();
@@ -384,8 +384,8 @@ contract NettingTest is Test {
         // Charlie:
         // +400 - 300 = +100
         //
-        // Actual cash settlement = 200 USDC
-        assertEq(netSettlementCount, 1);
+        // Three original trades were submitted.
+        assertEq(totalTradeCount, 3);
 
         // 1200 - 200 = 1000 USDC
         assertEq(liquiditySaved, 1000 * USDC);
