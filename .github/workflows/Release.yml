@@ -1,0 +1,33 @@
+name: Release A New Version
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions: write-all
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create a release draft
+        uses: release-drafter/release-drafter@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment PR to notify
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🎉🎉🎉 Congratulations on your new release! 🎉🎉🎉 
+
+              We have created a release draft of the new version, please go to [Release](https://github.com/nettedx/nettedx-Blockchain/releases) to publish it! ✨`
+            })

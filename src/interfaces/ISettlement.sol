@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.28;
+pragma solidity ^0.8.24;
 
-import { NetPosition } from "../Types.sol";
+import "../libraries/Types.sol";
 
-/// @notice Execution boundary used by Netting after a window becomes feasible.
 interface ISettlement {
-    /// @dev Must atomically settle every supplied position or revert.
-    function settle(uint256 windowId, NetPosition[] calldata positions) external;
+    function settle(Types.NetPosition[] calldata positions) external;
+
+    function checkShortfalls(Types.NetPosition[] calldata positions) external view returns (Types.NetPosition[] memory);
 }
