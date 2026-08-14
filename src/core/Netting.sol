@@ -21,17 +21,10 @@ contract Netting is Ownable {
 
     mapping(uint256 => Types.Trade[]) private trades;
 
-    constructor(
-        address initialOwner,
-        address cashToken_,
-        address bondToken_,
-        address settlement_
-    ) Ownable(initialOwner) {
-        if (
-            cashToken_ == address(0) ||
-            bondToken_ == address(0) ||
-            settlement_ == address(0)
-        ) {
+    constructor(address initialOwner, address cashToken_, address bondToken_, address settlement_)
+        Ownable(initialOwner)
+    {
+        if (cashToken_ == address(0) || bondToken_ == address(0) || settlement_ == address(0)) {
             revert Errors.ZeroAddress();
         }
 
@@ -47,12 +40,7 @@ contract Netting is Ownable {
      * @notice Submit an already matched trade.
      *         No assets move here.
      */
-    function submitTrade(
-        address buyer,
-        address seller,
-        uint256 cashAmount,
-        uint256 bondAmount
-    ) external {
+    function submitTrade(address buyer, address seller, uint256 cashAmount, uint256 bondAmount) external {
         if (buyer == address(0) || seller == address(0)) {
             revert Errors.ZeroAddress();
         }
@@ -71,33 +59,19 @@ contract Netting is Ownable {
         //
         // Block 11 freezes the window. Blocks 12 and 13 are reserved
         // for funding preparation, and settlement starts at block 14.
-        if (
-            block.number < windowStartBlock ||
-            block.number >= windowStartBlock + Constants.WINDOW_SIZE
-        ) {
+        if (block.number < windowStartBlock || block.number >= windowStartBlock + Constants.WINDOW_SIZE) {
             revert Errors.WindowClosed();
         }
 
         Types.Trade memory trade = Types.Trade({
-            buyer: buyer,
-            seller: seller,
-            cashAmount: cashAmount,
-            bondAmount: bondAmount,
-            blockNum: uint64(block.number)
+            buyer: buyer, seller: seller, cashAmount: cashAmount, bondAmount: bondAmount, blockNum: uint64(block.number)
         });
 
         uint256 tradeId = trades[currentWindowId].length;
 
         trades[currentWindowId].push(trade);
 
-        emit Events.TradeSubmitted(
-            currentWindowId,
-            tradeId,
-            buyer,
-            seller,
-            cashAmount,
-            bondAmount
-        );
+        emit Events.TradeSubmitted(currentWindowId, tradeId, buyer, seller, cashAmount, bondAmount);
     }
 
     /**
@@ -116,32 +90,19 @@ contract Netting is Ownable {
         uint256 totalTrades = trades[windowId].length;
 
         if (totalTrades == 0) {
-            emit Events.WindowClosed(
-                windowId,
-                0,
-                windowStartBlock,
-                windowStartBlock + Constants.WINDOW_SIZE - 1
-            );
+            emit Events.WindowClosed(windowId, 0, windowStartBlock, windowStartBlock + Constants.WINDOW_SIZE - 1);
 
             _advanceWindow();
 
             return;
         }
 
-        emit Events.WindowClosed(
-            windowId,
-            totalTrades,
-            windowStartBlock,
-            windowStartBlock + Constants.WINDOW_SIZE - 1
-        );
+        emit Events.WindowClosed(windowId, totalTrades, windowStartBlock, windowStartBlock + Constants.WINDOW_SIZE - 1);
 
         Types.NetPosition[] memory positions = _calculateNetPositions(windowId);
 
         try settlement.settle(positions) {
-            emit Events.SettlementSucceeded(
-                windowId,
-                _countTransfers(positions)
-            );
+            emit Events.SettlementSucceeded(windowId, _countTransfers(positions));
 
             delete trades[windowId];
 
@@ -181,11 +142,7 @@ contract Netting is Ownable {
     /**
      * @notice Preview current window net positions.
      */
-    function previewNetPositions()
-        external
-        view
-        returns (Types.NetPosition[] memory)
-    {
+    function previewNetPositions() external view returns (Types.NetPosition[] memory) {
         return _calculateNetPositions(currentWindowId);
     }
 
@@ -237,10 +194,7 @@ contract Netting is Ownable {
     /**
      * @notice Return one trade.
      */
-    function getTrade(
-        uint256 windowId,
-        uint256 tradeId
-    ) external view returns (Types.Trade memory) {
+    function getTrade(uint256 windowId, uint256 tradeId) external view returns (Types.Trade memory) {
         return trades[windowId][tradeId];
     }
 
@@ -255,9 +209,7 @@ contract Netting is Ownable {
      * buyer BOND  += bond
      * seller BOND -= bond
      */
-    function _calculateNetPositions(
-        uint256 windowId
-    ) internal view returns (Types.NetPosition[] memory) {
+    function _calculateNetPositions(uint256 windowId) internal view returns (Types.NetPosition[] memory) {
         Types.Trade[] storage windowTrades = trades[windowId];
 
         uint256 maxPositions = windowTrades.length * 4;
@@ -270,40 +222,16 @@ contract Netting is Ownable {
             Types.Trade storage trade = windowTrades[i];
 
             // Buyer pays CASH
-            count = _addPosition(
-                temp,
-                count,
-                trade.buyer,
-                cashToken,
-                -int256(trade.cashAmount)
-            );
+            count = _addPosition(temp, count, trade.buyer, cashToken, -int256(trade.cashAmount));
 
             // Seller receives CASH
-            count = _addPosition(
-                temp,
-                count,
-                trade.seller,
-                cashToken,
-                int256(trade.cashAmount)
-            );
+            count = _addPosition(temp, count, trade.seller, cashToken, int256(trade.cashAmount));
 
             // Buyer receives BOND
-            count = _addPosition(
-                temp,
-                count,
-                trade.buyer,
-                bondToken,
-                int256(trade.bondAmount)
-            );
+            count = _addPosition(temp, count, trade.buyer, bondToken, int256(trade.bondAmount));
 
             // Seller pays BOND
-            count = _addPosition(
-                temp,
-                count,
-                trade.seller,
-                bondToken,
-                -int256(trade.bondAmount)
-            );
+            count = _addPosition(temp, count, trade.seller, bondToken, -int256(trade.bondAmount));
         }
 
         Types.NetPosition[] memory result = new Types.NetPosition[](count);
@@ -325,10 +253,7 @@ contract Netting is Ownable {
         int256 delta
     ) internal pure returns (uint256) {
         for (uint256 i = 0; i < count; i++) {
-            if (
-                positions[i].participant == participant &&
-                positions[i].asset == asset
-            ) {
+            if (positions[i].participant == participant && positions[i].asset == asset) {
                 positions[i].amount += delta;
 
                 if (positions[i].amount == 0) {
@@ -339,11 +264,7 @@ contract Netting is Ownable {
             }
         }
 
-        positions[count] = Types.NetPosition({
-            participant: participant,
-            asset: asset,
-            amount: delta
-        });
+        positions[count] = Types.NetPosition({participant: participant, asset: asset, amount: delta});
 
         return count + 1;
     }
@@ -353,9 +274,7 @@ contract Netting is Ownable {
      *
      * sum(net[p][asset]) == 0
      */
-    function _checkConservation(
-        Types.NetPosition[] memory positions
-    ) internal pure {
+    function _checkConservation(Types.NetPosition[] memory positions) internal pure {
         for (uint256 i = 0; i < positions.length; i++) {
             if (positions[i].amount == 0) {
                 continue;
@@ -385,9 +304,7 @@ contract Netting is Ownable {
         }
     }
 
-    function _countTransfers(
-        Types.NetPosition[] memory positions
-    ) internal pure returns (uint256 count) {
+    function _countTransfers(Types.NetPosition[] memory positions) internal pure returns (uint256 count) {
         // This is an upper-bound style estimate for event/UI.
         // Exact transfer count is determined inside Settlement.
         for (uint256 i = 0; i < positions.length; i++) {
