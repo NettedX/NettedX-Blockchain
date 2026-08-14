@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockUSDC} from "../../src/src//tokens/MockUSDC.sol";
-import {MockBond} from "../../src/src/tokens/MockBond.sol";
+import {MockUSDC} from "../../src//tokens/MockUSDC.sol";
+import {MockBond} from "../../src/tokens/MockBond.sol";
 
 contract MockTokenTest is Test {
     MockUSDC usdc;

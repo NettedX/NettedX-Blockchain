@@ -3,14 +3,14 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockUSDC} from "../../src/src/tokens/MockUSDC.sol";
-import {MockBond} from "../../src/src/tokens/MockBond.sol";
+import {MockUSDC} from "../../src/tokens/MockUSDC.sol";
+import {MockBond} from "../../src/tokens/MockBond.sol";
 
-import {Settlement} from "../../src/src/core/Settlement.sol";
-import {Netting} from "../../src/src/core/Netting.sol";
-import {LiquidityPool} from "../../src/src/core/LiquidityPool.sol";
+import {Settlement} from "../../src/core/Settlement.sol";
+import {Netting} from "../../src/core/Netting.sol";
+import {LiquidityPool} from "../../src/core/LiquidityPool.sol";
 
-import {Types} from "../../src/src/libraries/Types.sol";
+import {Types} from "../../src/libraries/Types.sol";
 
 contract SettlementTest is Test {
     MockUSDC usdc;
