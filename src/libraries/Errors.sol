@@ -6,6 +6,8 @@ library Errors {
     error InvalidTrade();
 
     error WindowNotClosed();
+    error WindowClosed();
+    error SettlementNotReady();
     error EmptyWindow();
 
     error NotOperator();

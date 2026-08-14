@@ -65,15 +65,14 @@ contract Netting is Ownable {
             revert Errors.InvalidTrade();
         }
 
-        uint256 targetWindow = currentWindowId;
-
         // Current window is:
         //
         // [windowStartBlock, windowStartBlock + 9]
         //
-        // Anything after that belongs to the next window.
-        if (block.number >= windowStartBlock + Constants.WINDOW_SIZE) {
-            targetWindow = currentWindowId + 1;
+        // Block 11 freezes the window. Blocks 12 and 13 are reserved
+        // for funding preparation, and settlement starts at block 14.
+        if (block.number < windowStartBlock || block.number >= windowStartBlock + Constants.WINDOW_SIZE) {
+            revert Errors.WindowClosed();
         }
 
         Types.Trade memory trade = Types.Trade({
@@ -84,9 +83,9 @@ contract Netting is Ownable {
             blockNum: uint64(block.number)
         });
 
-        uint256 tradeId = trades[targetWindow].length;
+        uint256 tradeId = trades[currentWindowId].length;
 
-        trades[targetWindow].push(trade);
+        trades[currentWindowId].push(trade);
 
         emit Events.TradeSubmitted(
             targetWindow,
@@ -99,14 +98,14 @@ contract Netting is Ownable {
     }
 
     /**
-     * @notice Close current window, calculate net positions,
-     *         and atomically settle.
+     * @notice Calculate the frozen window's net positions and atomically settle.
+     *         Settlement is available from block 14 of the cycle.
      *
      *         Only operator / owner can call this.
      */
     function executeWindow() external onlyOwner {
-        if (block.number < windowStartBlock + Constants.WINDOW_SIZE) {
-            revert Errors.WindowNotClosed();
+        if (block.number < windowStartBlock + Constants.CYCLE_SIZE - 1) {
+            revert Errors.SettlementNotReady();
         }
 
         uint256 windowId = currentWindowId;
@@ -410,6 +409,6 @@ contract Netting is Ownable {
     function _advanceWindow() internal {
         currentWindowId += 1;
 
-        windowStartBlock += Constants.WINDOW_SIZE;
+        windowStartBlock += Constants.CYCLE_SIZE;
     }
 }

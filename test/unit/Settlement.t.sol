@@ -129,6 +129,7 @@ contract SettlementTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+        vm.roll(netting.windowStartBlock() + 13);
 
         // Netting -> Settlement
         netting.executeWindow();
@@ -233,6 +234,7 @@ contract SettlementTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+        vm.roll(netting.windowStartBlock() + 13);
 
         // ========================================================
         // Execute settlement
@@ -314,6 +316,7 @@ contract SettlementTest is Test {
         uint256 remaining = netting.blocksRemaining();
 
         vm.roll(block.number + remaining);
+        vm.roll(netting.windowStartBlock() + 13);
 
         // ========================================================
         // Execute settlement.
