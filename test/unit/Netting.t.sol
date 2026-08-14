@@ -41,7 +41,12 @@ contract NettingTest is Test {
         liquidityPool = new LiquidityPool();
 
         // Deploy Netting
-        netting = new Netting(address(this), address(usdc), address(bond), address(settlement));
+        netting = new Netting(
+            address(this),
+            address(usdc),
+            address(bond),
+            address(settlement)
+        );
 
         // Two-phase initialization
         settlement.setNetting(address(netting));
@@ -295,7 +300,7 @@ contract NettingTest is Test {
             uint256 netSettlementAmount,
             uint256 liquiditySaved,
             uint256 obligationReduction
-        ) = netting.getDashboardMetrics();
+        ) = netting.getPublicAnalyticsMetrics();
 
         assertEq(totalSettlementAmount, 0);
         assertEq(netSettlementAmount, 0);
@@ -318,7 +323,7 @@ contract NettingTest is Test {
             uint256 netSettlementAmount,
             uint256 liquiditySaved,
             uint256 obligationReduction
-        ) = netting.getDashboardMetrics();
+        ) = netting.getPublicAnalyticsMetrics();
 
         // Total before netting:
         // 500 + 400 + 300 = 1200 USDC
