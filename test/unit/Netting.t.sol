@@ -338,12 +338,8 @@ contract NettingTest is Test {
     }
 
     function testGetPublicAnalyticsMetricsEmptyWindow() public {
-        (
-            uint256 totalSettlementAmount,
-            uint256 totalTradeCount,
-            uint256 liquiditySaved,
-            uint256 obligationReduction
-        ) = netting.getPublicAnalyticsMetrics();
+        (uint256 totalSettlementAmount, uint256 totalTradeCount, uint256 liquiditySaved, uint256 obligationReduction) =
+            netting.getPublicAnalyticsMetrics();
 
         assertEq(totalSettlementAmount, 0);
 
@@ -362,12 +358,8 @@ contract NettingTest is Test {
         // Charlie -> Alice: 300 USDC
         netting.submitTrade(charlie, alice, 300 * USDC, 3);
 
-        (
-            uint256 totalSettlementAmount,
-            uint256 totalTradeCount,
-            uint256 liquiditySaved,
-            uint256 obligationReduction
-        ) = netting.getPublicAnalyticsMetrics();
+        (uint256 totalSettlementAmount, uint256 totalTradeCount, uint256 liquiditySaved, uint256 obligationReduction) =
+            netting.getPublicAnalyticsMetrics();
 
         // Total before netting:
         // 500 + 400 + 300 = 1200 USDC

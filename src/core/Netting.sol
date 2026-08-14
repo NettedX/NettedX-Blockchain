@@ -147,8 +147,8 @@ contract Netting is Ownable {
     }
 
     /**
- * @notice Return public analytics metrics for the current window.
- */
+     * @notice Return public analytics metrics for the current window.
+     */
     function getPublicAnalyticsMetrics()
         external
         view
