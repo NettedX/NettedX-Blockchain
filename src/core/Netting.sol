@@ -146,47 +146,42 @@ contract Netting is Ownable {
         return _calculateNetPositions(currentWindowId);
     }
 
-    function getDashboardMetrics()
+    function getPublicAnalyticsMetrics()
         external
         view
         returns (
             uint256 totalSettlementAmount,
-            uint256 netSettlementAmount,
+            uint256 netSettlementCount,
             uint256 liquiditySaved,
             uint256 obligationReduction
         )
     {
         uint256 windowId = currentWindowId;
 
-        // 1. Calculate total settlement amount before netting
         Types.Trade[] storage windowTrades = trades[windowId];
 
         for (uint256 i = 0; i < windowTrades.length; i++) {
             totalSettlementAmount += windowTrades[i].cashAmount;
         }
 
-        // No trades
         if (totalSettlementAmount == 0) {
             return (0, 0, 0, 0);
         }
 
-        // 2. Calculate net positions
         Types.NetPosition[] memory positions = _calculateNetPositions(windowId);
 
-        // 3. Calculate actual cash settlement after netting
+        uint256 netSettlementAmount;
+
         for (uint256 i = 0; i < positions.length; i++) {
             if (positions[i].asset == cashToken && positions[i].amount < 0) {
                 netSettlementAmount += uint256(-positions[i].amount);
+                netSettlementCount++;
             }
         }
 
-        // 4. Liquidity saved
         liquiditySaved = totalSettlementAmount - netSettlementAmount;
 
-        // 5. Obligation reduction percentage × 100
-        // Example:
-        // 83.33% => 8333
-        obligationReduction = (liquiditySaved * 10000) / totalSettlementAmount;
+        obligationReduction = (liquiditySaved * 100) / totalSettlementAmount;
     }
 
     /**

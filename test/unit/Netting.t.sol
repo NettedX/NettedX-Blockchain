@@ -340,13 +340,14 @@ contract NettingTest is Test {
     function testGetDashboardMetrics() public {
         (
             uint256 totalSettlementAmount,
-            uint256 netSettlementAmount,
+            uint256 netSettlementCount,
             uint256 liquiditySaved,
             uint256 obligationReduction
-        ) = netting.getDashboardMetrics();
+        ) = netting.getPublicAnalyticsMetrics();
 
         assertEq(totalSettlementAmount, 0);
-        assertEq(netSettlementAmount, 0);
+
+        assertEq(netSettlementCount, 0);
         assertEq(liquiditySaved, 0);
         assertEq(obligationReduction, 0);
     }
@@ -363,10 +364,10 @@ contract NettingTest is Test {
 
         (
             uint256 totalSettlementAmount,
-            uint256 netSettlementAmount,
+            uint256 netSettlementCount,
             uint256 liquiditySaved,
             uint256 obligationReduction
-        ) = netting.getDashboardMetrics();
+        ) = netting.getPublicAnalyticsMetrics();
 
         // Total before netting:
         // 500 + 400 + 300 = 1200 USDC
@@ -384,13 +385,14 @@ contract NettingTest is Test {
         // +400 - 300 = +100
         //
         // Actual cash settlement = 200 USDC
-        assertEq(netSettlementAmount, 200 * USDC);
+        assertEq(netSettlementCount, 1);
 
         // 1200 - 200 = 1000 USDC
         assertEq(liquiditySaved, 1000 * USDC);
 
         // 1000 / 1200 * 10000 = 8333
-        // 8333 = 83.33%
-        assertEq(obligationReduction, 8333);
+        // 1000 / 1200 * 100 = 83
+        // 83 = 83.33% rounded down
+        assertEq(obligationReduction, 83);
     }
 }
