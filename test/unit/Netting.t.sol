@@ -42,12 +42,7 @@ contract NettingTest is Test {
         liquidityPool = new LiquidityPool();
 
         // Deploy Netting
-        netting = new Netting(
-            address(this),
-            address(usdc),
-            address(bond),
-            address(settlement)
-        );
+        netting = new Netting(address(this), address(usdc), address(bond), address(settlement));
 
         // Two-phase initialization
         settlement.setNetting(address(netting));
