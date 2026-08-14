@@ -3,8 +3,10 @@ name: CI
 permissions: {}
 
 on:
-  push:
   pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
