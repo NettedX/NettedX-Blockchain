@@ -20,6 +20,7 @@ contract Netting is Ownable {
     uint256 public windowStartBlock;
 
     mapping(uint256 => Types.Trade[]) private trades;
+    mapping(uint256 => bool) public windowFrozen;
 
     constructor(address initialOwner, address cashToken_, address bondToken_, address settlement_)
         Ownable(initialOwner)
@@ -53,25 +54,31 @@ contract Netting is Ownable {
             revert Errors.InvalidTrade();
         }
 
-        // Current window is:
+        // The current settlement window is:
         //
         // [windowStartBlock, windowStartBlock + 9]
         //
-        // Block 11 freezes the window. Blocks 12 and 13 are reserved
-        // for funding preparation, and settlement starts at block 14.
-        if (block.number < windowStartBlock || block.number >= windowStartBlock + Constants.WINDOW_SIZE) {
-            revert Errors.WindowClosed();
-        }
+        // From block 11, new trades belong to the next window while
+        // the current one is frozen, prepared and settled in parallel.
+        uint256 targetWindow = tradingWindowId();
 
         Types.Trade memory trade = Types.Trade({
             buyer: buyer, seller: seller, cashAmount: cashAmount, bondAmount: bondAmount, blockNum: uint64(block.number)
         });
 
-        uint256 tradeId = trades[currentWindowId].length;
+        uint256 tradeId = trades[targetWindow].length;
 
-        trades[currentWindowId].push(trade);
+        trades[targetWindow].push(trade);
 
-        emit Events.TradeSubmitted(currentWindowId, tradeId, buyer, seller, cashAmount, bondAmount);
+        emit Events.TradeSubmitted(targetWindow, tradeId, buyer, seller, cashAmount, bondAmount);
+    }
+
+    /**
+     * @notice Freeze the current window from block 11.
+     *         The next window is already open for trade submission.
+     */
+    function freezeWindow() external onlyOwner {
+        _freezeWindow(currentWindowId);
     }
 
     /**
@@ -81,23 +88,21 @@ contract Netting is Ownable {
      *         Only operator / owner can call this.
      */
     function executeWindow() external onlyOwner {
-        if (block.number < windowStartBlock + Constants.CYCLE_SIZE - 1) {
+        if (block.number < windowStartBlock + Constants.SETTLEMENT_BLOCK_OFFSET) {
             revert Errors.SettlementNotReady();
         }
 
         uint256 windowId = currentWindowId;
 
+        _freezeWindow(windowId);
+
         uint256 totalTrades = trades[windowId].length;
 
         if (totalTrades == 0) {
-            emit Events.WindowClosed(windowId, 0, windowStartBlock, windowStartBlock + Constants.WINDOW_SIZE - 1);
-
             _advanceWindow();
 
             return;
         }
-
-        emit Events.WindowClosed(windowId, totalTrades, windowStartBlock, windowStartBlock + Constants.WINDOW_SIZE - 1);
 
         Types.NetPosition[] memory positions = _calculateNetPositions(windowId);
 
@@ -125,6 +130,29 @@ contract Netting is Ownable {
     /**
      * @notice Current window.
      */
+
+    /**
+     * @notice Window currently accepting trades.
+     */
+    function tradingWindowId() public view returns (uint256) {
+        if (block.number >= windowStartBlock + Constants.WINDOW_SIZE * 2) {
+            revert Errors.WindowBacklog();
+        }
+
+        if (block.number >= windowStartBlock + Constants.WINDOW_SIZE) {
+            return currentWindowId + 1;
+        }
+
+        return currentWindowId;
+    }
+
+    /**
+     * @notice Actions that the automatic operator should execute now.
+     */
+    function automationState() external view returns (bool freezeNeeded, bool settlementNeeded) {
+        freezeNeeded = block.number >= windowStartBlock + Constants.WINDOW_SIZE && !windowFrozen[currentWindowId];
+        settlementNeeded = block.number >= windowStartBlock + Constants.SETTLEMENT_BLOCK_OFFSET;
+    }
 
     /**
      * @notice Blocks remaining before window closes.
@@ -326,9 +354,25 @@ contract Netting is Ownable {
         delete trades[windowId];
     }
 
+    function _freezeWindow(uint256 windowId) internal {
+        if (windowFrozen[windowId]) {
+            return;
+        }
+
+        if (block.number < windowStartBlock + Constants.WINDOW_SIZE) {
+            revert Errors.WindowNotClosed();
+        }
+
+        windowFrozen[windowId] = true;
+
+        emit Events.WindowClosed(
+            windowId, trades[windowId].length, windowStartBlock, windowStartBlock + Constants.WINDOW_SIZE - 1
+        );
+    }
+
     function _advanceWindow() internal {
         currentWindowId += 1;
 
-        windowStartBlock += Constants.CYCLE_SIZE;
+        windowStartBlock += Constants.WINDOW_SIZE;
     }
 }
