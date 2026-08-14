@@ -13,13 +13,7 @@ import {LiquidityPool} from "../src/src/core/LiquidityPool.sol";
 contract Deploy is Script {
     function run()
         external
-        returns (
-            MockUSDC usdc,
-            MockBond bond,
-            Settlement settlement,
-            Netting netting,
-            LiquidityPool liquidityPool
-        )
+        returns (MockUSDC usdc, MockBond bond, Settlement settlement, Netting netting, LiquidityPool liquidityPool)
     {
         // =========================================================
         // Get deployer private key
@@ -59,12 +53,7 @@ contract Deploy is Script {
         // 4. Deploy Netting
         // =========================================================
 
-        netting = new Netting(
-            deployer,
-            address(usdc),
-            address(bond),
-            address(settlement)
-        );
+        netting = new Netting(deployer, address(usdc), address(bond), address(settlement));
 
         // =========================================================
         // 5. Deploy LiquidityPool

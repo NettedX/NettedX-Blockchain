@@ -117,9 +117,7 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
      *
      * The LiquidityPool records the shortfall as debt.
      */
-    function settle(
-        Types.NetPosition[] calldata positions
-    ) external override onlyNetting nonReentrant {
+    function settle(Types.NetPosition[] calldata positions) external override onlyNetting nonReentrant {
         if (positions.length == 0) {
             revert Errors.InvalidPosition();
         }
@@ -130,9 +128,7 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
 
         uint256 transferCount = 0;
 
-        Types.NetPosition[] memory remaining = new Types.NetPosition[](
-            positions.length
-        );
+        Types.NetPosition[] memory remaining = new Types.NetPosition[](positions.length);
 
         for (uint256 i = 0; i < positions.length; i++) {
             remaining[i] = positions[i];
@@ -164,9 +160,7 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
 
                 uint256 amountToReceive = uint256(remaining[j].amount);
 
-                uint256 amount = amountToPay < amountToReceive
-                    ? amountToPay
-                    : amountToReceive;
+                uint256 amount = amountToPay < amountToReceive ? amountToPay : amountToReceive;
 
                 if (amount == 0) {
                     continue;
@@ -204,11 +198,7 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
                 uint256 poolAmount = amount - payerAmount;
 
                 if (poolAmount > 0) {
-                    ILiquidityPool(liquidityPool).provideLiquidity(
-                        asset,
-                        payer,
-                        poolAmount
-                    );
+                    ILiquidityPool(liquidityPool).provideLiquidity(asset, payer, poolAmount);
                 }
 
                 // =================================================
@@ -233,13 +223,7 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
                     token.safeTransfer(receiver, poolAmount);
                 }
 
-                emit Events.Transferred(
-                    INetting(netting).currentWindowId(),
-                    asset,
-                    payer,
-                    receiver,
-                    amount
-                );
+                emit Events.Transferred(INetting(netting).currentWindowId(), asset, payer, receiver, amount);
 
                 transferCount++;
 
@@ -282,9 +266,12 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
      * @notice Check which participants have
      *         insufficient balance or allowance.
      */
-    function checkShortfalls(
-        Types.NetPosition[] calldata positions
-    ) external view override returns (Types.NetPosition[] memory) {
+    function checkShortfalls(Types.NetPosition[] calldata positions)
+        external
+        view
+        override
+        returns (Types.NetPosition[] memory)
+    {
         uint256 count = 0;
 
         // First pass: count shortfalls.
@@ -298,9 +285,8 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
             IERC20 token = IERC20(positions[i].asset);
 
             if (
-                token.balanceOf(positions[i].participant) < required ||
-                token.allowance(positions[i].participant, address(this)) <
-                required
+                token.balanceOf(positions[i].participant) < required
+                    || token.allowance(positions[i].participant, address(this)) < required
             ) {
                 count++;
             }
@@ -320,10 +306,8 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
 
             IERC20 token = IERC20(positions[i].asset);
 
-            bool shortfall = token.balanceOf(positions[i].participant) <
-                required ||
-                token.allowance(positions[i].participant, address(this)) <
-                required;
+            bool shortfall = token.balanceOf(positions[i].participant) < required
+                || token.allowance(positions[i].participant, address(this)) < required;
 
             if (shortfall) {
                 result[index] = positions[i];

@@ -5,9 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockBond is ERC20, Ownable {
-    constructor(
-        address initialOwner
-    ) ERC20("Mock Bond", "mBOND") Ownable(initialOwner) {}
+    constructor(address initialOwner) ERC20("Mock Bond", "mBOND") Ownable(initialOwner) {}
 
     function decimals() public pure override returns (uint8) {
         return 0;

@@ -58,12 +58,7 @@ contract SettlementTest is Test {
         // Deploy Netting
         // =========================================================
 
-        netting = new Netting(
-            address(this),
-            address(usdc),
-            address(bond),
-            address(settlement)
-        );
+        netting = new Netting(address(this), address(usdc), address(bond), address(settlement));
 
         // =========================================================
         // Two-phase initialization
@@ -156,17 +151,9 @@ contract SettlementTest is Test {
     function testSettlementCannotBeCalledDirectly() public {
         Types.NetPosition[] memory positions = new Types.NetPosition[](2);
 
-        positions[0] = Types.NetPosition({
-            participant: alice,
-            asset: address(usdc),
-            amount: -int256(100 * USDC)
-        });
+        positions[0] = Types.NetPosition({participant: alice, asset: address(usdc), amount: -int256(100 * USDC)});
 
-        positions[1] = Types.NetPosition({
-            participant: bob,
-            asset: address(usdc),
-            amount: int256(100 * USDC)
-        });
+        positions[1] = Types.NetPosition({participant: bob, asset: address(usdc), amount: int256(100 * USDC)});
 
         // This test contract is NOT Netting.
         //

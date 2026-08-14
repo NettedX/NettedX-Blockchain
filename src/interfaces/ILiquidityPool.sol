@@ -17,11 +17,7 @@ interface ILiquidityPool {
      *
      * The caller must be the authorized Settlement contract.
      */
-    function provideLiquidity(
-        address asset,
-        address debtor,
-        uint256 amount
-    ) external;
+    function provideLiquidity(address asset, address debtor, uint256 amount) external;
 
     /**
      * @notice Repay outstanding liquidity debt.
@@ -36,8 +32,5 @@ interface ILiquidityPool {
     /**
      * @notice Debt owed by a participant for an asset.
      */
-    function debt(
-        address debtor,
-        address asset
-    ) external view returns (uint256);
+    function debt(address debtor, address asset) external view returns (uint256);
 }

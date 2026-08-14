@@ -71,10 +71,7 @@ contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
     /**
      * @notice Deposit tokens into the pool.
      */
-    function deposit(
-        address asset,
-        uint256 amount
-    ) external override nonReentrant {
+    function deposit(address asset, uint256 amount) external override nonReentrant {
         require(asset != address(0), "Zero asset");
 
         require(amount > 0, "Zero amount");
@@ -91,10 +88,7 @@ contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
      * Liquidity providers can only withdraw their
      * own deposited funds.
      */
-    function withdraw(
-        address asset,
-        uint256 amount
-    ) external override nonReentrant {
+    function withdraw(address asset, uint256 amount) external override nonReentrant {
         require(asset != address(0), "Zero asset");
 
         require(amount > 0, "Zero amount");
@@ -120,11 +114,12 @@ contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
      * Settlement can then use those funds to complete
      * the settlement process.
      */
-    function provideLiquidity(
-        address asset,
-        address debtor,
-        uint256 amount
-    ) external override onlySettlement nonReentrant {
+    function provideLiquidity(address asset, address debtor, uint256 amount)
+        external
+        override
+        onlySettlement
+        nonReentrant
+    {
         require(asset != address(0), "Zero asset");
 
         require(debtor != address(0), "Zero debtor");
@@ -143,10 +138,7 @@ contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
     /**
      * @notice Repay outstanding liquidity debt.
      */
-    function repay(
-        address asset,
-        uint256 amount
-    ) external override nonReentrant {
+    function repay(address asset, uint256 amount) external override nonReentrant {
         require(asset != address(0), "Zero asset");
 
         require(amount > 0, "Zero amount");

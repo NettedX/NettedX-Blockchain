@@ -56,12 +56,7 @@ contract EndToEndTest is Test {
         // 5. Deploy Netting
         // ==================================================
 
-        netting = new Netting(
-            address(this),
-            address(usdc),
-            address(bond),
-            address(settlement)
-        );
+        netting = new Netting(address(this), address(usdc), address(bond), address(settlement));
 
         // ==================================================
         // 6. Two-phase initialization
