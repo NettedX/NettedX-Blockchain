@@ -36,7 +36,7 @@ services:
       retries: 10
 
   deployer:
-    image: ${IMAGE}
+    image: ${IMAGE:-ghcr.io/nettedx/nettedx-blockchain:latest}
 
     container_name: ${DEPLOYER_CONTAINER_NAME}
 
@@ -46,14 +46,11 @@ services:
 
     environment:
       RPC_URL: ${RPC_URL}
-      DEPLOYER_PRIVATE_KEY: ${DEPLOYER_PRIVATE_KEY}
+      PRIVATE_KEY: ${PRIVATE_KEY}
 
     command:
-      - forge
       - script
       - script/Deploy.s.sol
       - --rpc-url
       - ${RPC_URL}
-      - --private-key
-      - ${DEPLOYER_PRIVATE_KEY}
       - --broadcast
