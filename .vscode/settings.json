@@ -1,0 +1,13 @@
+{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    ".gitignore": ".gitattributes, .gitmodules, .gitkeep",
+    ".env": ".env.*",
+    "foundry.toml": "foundry.*, remappings.txt",
+    "Dockerfile": "docker-compose.yml, docker-compose.override.yml, docker-compose.*.yml, .dockerignore"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "editor.formatOnSave": true,
+}
