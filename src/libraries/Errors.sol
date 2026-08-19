@@ -7,6 +7,7 @@ library Errors {
 
     error WindowNotClosed();
     error WindowClosed();
+    error WindowBacklog();
     error SettlementNotReady();
     error EmptyWindow();
 

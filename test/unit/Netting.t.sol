@@ -102,11 +102,69 @@ contract NettingTest is Test {
         assertEq(netting.tradeCount(0), 1);
     }
 
-    function testRejectsTradeFromEleventhBlock() public {
+    function testOpensNextWindowInEleventhBlock() public {
         vm.roll(netting.windowStartBlock() + 10);
 
-        vm.expectRevert(Errors.WindowClosed.selector);
         netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        assertEq(netting.tradingWindowId(), 1);
+        assertEq(netting.tradeCount(0), 0);
+        assertEq(netting.tradeCount(1), 1);
+    }
+
+    function testCannotFreezeBeforeEleventhBlock() public {
+        vm.expectRevert(Errors.WindowNotClosed.selector);
+        netting.freezeWindow();
+    }
+
+    function testFreezesCurrentWindowInEleventhBlock() public {
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        vm.roll(netting.windowStartBlock() + 10);
+        netting.freezeWindow();
+        netting.freezeWindow();
+
+        assertTrue(netting.windowFrozen(0));
+
+        netting.submitTrade(bob, alice, 400 * USDC, 4);
+
+        assertEq(netting.tradeCount(0), 1);
+        assertEq(netting.tradeCount(1), 1);
+    }
+
+    function testRejectsTradesIfAutomaticOperatorFallsOneWindowBehind() public {
+        vm.roll(netting.windowStartBlock() + 20);
+
+        vm.expectRevert(Errors.WindowBacklog.selector);
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+    }
+
+    function testAutomationStateTracksFreezeAndSettlement() public {
+        (bool freezeNeeded, bool settlementNeeded) = netting.automationState();
+
+        assertFalse(freezeNeeded);
+        assertFalse(settlementNeeded);
+
+        vm.roll(netting.windowStartBlock() + 10);
+
+        (freezeNeeded, settlementNeeded) = netting.automationState();
+
+        assertTrue(freezeNeeded);
+        assertFalse(settlementNeeded);
+
+        netting.freezeWindow();
+
+        (freezeNeeded, settlementNeeded) = netting.automationState();
+
+        assertFalse(freezeNeeded);
+        assertFalse(settlementNeeded);
+
+        vm.roll(netting.windowStartBlock() + 13);
+
+        (freezeNeeded, settlementNeeded) = netting.automationState();
+
+        assertFalse(freezeNeeded);
+        assertTrue(settlementNeeded);
     }
 
     // ============================================================
@@ -267,19 +325,21 @@ contract NettingTest is Test {
         assertEq(netting.tradeCount(1), 0);
     }
 
-    function testNextWindowStartsAfterSettlementBlock() public {
+    function testNextWindowTradesContinueDuringSettlement() public {
         netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        vm.roll(netting.windowStartBlock() + 10);
+        netting.freezeWindow();
+        netting.submitTrade(bob, alice, 400 * USDC, 4);
 
         vm.roll(netting.windowStartBlock() + 13);
         netting.executeWindow();
 
-        vm.expectRevert(Errors.WindowClosed.selector);
         netting.submitTrade(alice, bob, 500 * USDC, 5);
 
-        vm.roll(netting.windowStartBlock());
-        netting.submitTrade(alice, bob, 500 * USDC, 5);
-
-        assertEq(netting.tradeCount(1), 1);
+        assertEq(netting.currentWindowId(), 1);
+        assertEq(netting.tradingWindowId(), 1);
+        assertEq(netting.tradeCount(1), 2);
     }
 
     // ============================================================
