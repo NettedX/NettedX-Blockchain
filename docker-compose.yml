@@ -1,0 +1,66 @@
+services:
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.7.1
+    container_name: ${ANVIL_CONTAINER_NAME}
+
+    command:
+      - anvil
+      - --host
+      - 0.0.0.0
+      - --port
+      - ${ANVIL_PORT}
+      - --chain-id
+      - ${ANVIL_CHAIN_ID}
+      - --accounts
+      - ${ANVIL_ACCOUNTS}
+      - --balance
+      - ${ANVIL_BALANCE}
+      - --mnemonic
+      - ${ANVIL_MNEMONIC}
+
+    ports:
+      - "${ANVIL_PORT}:${ANVIL_PORT}"
+
+    volumes:
+      - anvil-data:/anvil-data
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "cast",
+          "block-number",
+          "--rpc-url",
+          "http://127.0.0.1:${ANVIL_PORT}"
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  deployer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ${DEPLOYER_CONTAINER_NAME}
+
+    depends_on:
+      anvil:
+        condition: service_healthy
+
+    environment:
+      RPC_URL: ${RPC_URL}
+      DEPLOYER_PRIVATE_KEY: ${DEPLOYER_PRIVATE_KEY}
+
+    command:
+      - forge
+      - script
+      - script/Deploy.s.sol
+      - --rpc-url
+      - ${RPC_URL}
+      - --private-key
+      - ${DEPLOYER_PRIVATE_KEY}
+      - --broadcast
+
+volumes:
+  anvil-data:

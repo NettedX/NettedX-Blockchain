@@ -1,0 +1,12 @@
+.git
+.github
+.vscode
+.idea
+
+.env
+.env.*
+
+out
+cache
+
+node_modules

@@ -4,9 +4,7 @@ NettedX Blockchain is the smart contract layer of the NettedX settlement system.
 
 The project implements blockchain-based trade netting and settlement using Solidity and Foundry. It includes settlement management, netting, liquidity pool management, ERC-20 test tokens, and dashboard metrics accessible through Ethereum JSON-RPC.
 
-## Get Started
-
-### Prerequisites
+## Prerequisites
 
 Make sure the following tools are installed:
 
@@ -31,6 +29,11 @@ You should also have `cast` and `anvil` available:
 cast --version
 anvil --version
 ```
+
+## Get Started
+
+> For developers.
+> Quickstart for users is available in the [Docker Deployment](#docker-deployment) section.
 
 ### Clone the Repository
 
@@ -73,48 +76,6 @@ To display contract bytecode sizes:
 ```bash
 forge build --sizes
 ```
-
-### Format
-
-Check whether the contracts follow the project's formatting rules:
-
-```bash
-forge fmt --check
-```
-
-To automatically format the code:
-
-```bash
-forge fmt
-```
-
-### Test
-
-Run the complete test suite:
-
-```bash
-forge test -vvv
-```
-
-For more detailed execution traces:
-
-```bash
-forge test -vvvv
-```
-
-You can also run a specific test file:
-
-```bash
-forge test --match-path test/unit/Netting.t.sol -vvv
-```
-
-The test suite covers the main components of the system, including:
-
-* Netting
-* Settlement
-* LiquidityPool
-* Mock tokens
-* End-to-end settlement flow
 
 ### Local Development
 
@@ -160,7 +121,51 @@ settlement.setNetting(address(netting));
 
 This allows `Netting` to execute settlement operations through the `Settlement` contract.
 
-### Contract Interaction
+## Available Commands
+
+### Format
+
+Check whether the contracts follow the project's formatting rules:
+
+```bash
+forge fmt --check
+```
+
+To automatically format the code:
+
+```bash
+forge fmt
+```
+
+### Test
+
+Run the complete test suite:
+
+```bash
+forge test -vvv
+```
+
+For more detailed execution traces:
+
+```bash
+forge test -vvvv
+```
+
+You can also run a specific test file:
+
+```bash
+forge test --match-path test/unit/Netting.t.sol -vvv
+```
+
+The test suite covers the main components of the system, including:
+
+* Netting
+* Settlement
+* LiquidityPool
+* Mock tokens
+* End-to-end settlement flow
+
+## Contract Interaction
 
 After deployment, contract addresses can be used with `cast` to interact with the blockchain.
 
@@ -189,49 +194,7 @@ MockUSDC
 MockBond
 ```
 
-### Dashboard Metrics
-
-The `Netting` contract provides dashboard metrics through:
-
-```solidity
-getDashboardMetrics()
-```
-
-It returns:
-
-```text
-totalSettlementAmount
-netSettlementAmount
-liquiditySaved
-obligationReduction
-```
-
-The function can be called through JSON-RPC using `cast`:
-
-```bash
-cast call \
-  $NETTING \
-  "getDashboardMetrics()(uint256,uint256,uint256,uint256)" \
-  --rpc-url $RPC_URL
-```
-
-These metrics can be queried by the backend through the blockchain's JSON-RPC endpoint.
-
-The backend needs:
-
-```text
-RPC URL
-Netting contract address
-Netting ABI
-```
-
-For local development, the RPC endpoint is:
-
-```text
-http://127.0.0.1:8545
-```
-
-### ABI
+## ABI
 
 After running:
 
@@ -255,7 +218,7 @@ The generated artifact contains the contract ABI and bytecode.
 
 The ABI can be used by the backend or frontend to interact with the deployed smart contract.
 
-### Environment Variables
+## Environment Variables
 
 For local development, you can use a `.env` file:
 
@@ -272,7 +235,37 @@ Make sure `.env` is included in `.gitignore`:
 .env
 ```
 
-### Common Dependency Issues
+## Docker Deployment
+
+> For production or users.
+
+The project provides a Dockerized development environment containing an Anvil private blockchain and the NettedX smart contracts.
+
+### Prerequisites
+
+- Docker
+- Docker Compose
+- Cloned repository with submodules initialized
+
+No local Foundry installation is required.
+
+### Configuration
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Change the variables in `.env` as needed.
+
+### Build and Run
+
+```bash
+docker-compose up --build
+```
+
+## Common Dependency Issues
 
 If Foundry reports dependency or submodule errors, first make sure all submodules are initialized and synchronized:
 
@@ -337,7 +330,7 @@ forge build --sizes
 forge test -vvv
 ```
 
-### Project Structure
+## Project Structure
 
 The main project structure is:
 
@@ -363,7 +356,7 @@ NettedX-Blockchain/
 └── README.md
 ```
 
-### Development Workflow
+## Development Workflow
 
 The recommended local development workflow is:
 
@@ -387,7 +380,7 @@ Interact Using cast
 Connect Backend / Frontend
 ```
 
-### Repository
+## Repository
 
 GitHub:
 
