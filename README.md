@@ -91,35 +91,13 @@ The default RPC endpoint is:
 http://127.0.0.1:8545
 ```
 
-Then deploy or interact with contracts using Foundry's `forge` and `cast` commands.
+Then deploy or interact with contracts using Foundry's `forge` command.
 
-The deployment script is located at:
-
-```text
-script/Deploy.s.sol
+```bash
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-The deployment flow is:
-
-```text
-MockUSDC
-   ↓
-MockBond
-   ↓
-Settlement
-   ↓
-Netting
-   ↓
-LiquidityPool
-```
-
-After deploying `Netting`, the `Settlement` contract must be connected to it:
-
-```solidity
-settlement.setNetting(address(netting));
-```
-
-This allows `Netting` to execute settlement operations through the `Settlement` contract.
+From now on, all contracts have been deployed to the local Anvil blockchain, and you can start the Backend via RPC to interact with the smart contracts.
 
 ## Available Commands
 

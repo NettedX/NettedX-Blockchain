@@ -53,13 +53,10 @@ services:
       PRIVATE_KEY: ${PRIVATE_KEY}
 
     command:
-      - forge
       - script
       - script/Deploy.s.sol
       - --rpc-url
       - ${RPC_URL}
-      - --private-key
-      - ${PRIVATE_KEY}
       - --broadcast
 
 volumes:
