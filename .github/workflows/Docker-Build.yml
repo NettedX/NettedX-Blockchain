@@ -69,7 +69,7 @@ jobs:
         script: |
           set -e
 
-          cd /opt/nettedx
+          cd /opt/NettedX/NettedX-Blockchain
 
           export VERSION="${{ github.event.release.tag_name }}"
           export VERSION="${VERSION#v}"
