@@ -2,32 +2,21 @@
 
 NettedX Blockchain is the smart contract layer of the NettedX settlement system.
 
-The project implements blockchain-based trade netting and settlement using Solidity and Foundry. It includes settlement management, netting, liquidity pool management, ERC-20 test tokens, and dashboard metrics accessible through Ethereum JSON-RPC.
+The project implements blockchain-based trade netting and settlement using Solidity and Foundry. It includes settlement management, netting, liquidity pool management, ERC-20 test tokens, and other functionalities.
 
 ## Prerequisites
 
 Make sure the following tools are installed:
 
-* Foundry
+* [Foundry](https://github.com/foundry-rs/foundry)
 * Git
 
-On macOS, Foundry can be installed with Homebrew:
-
-```bash
-brew install foundry
-```
+> Tips: On macOS, Foundry can be installed with Homebrew.
 
 Verify the installation:
 
 ```bash
 forge --version
-```
-
-You should also have `cast` and `anvil` available:
-
-```bash
-cast --version
-anvil --version
 ```
 
 ## Get Started
@@ -71,12 +60,6 @@ Compile all Solidity contracts:
 forge build
 ```
 
-To display contract bytecode sizes:
-
-```bash
-forge build --sizes
-```
-
 ### Local Development
 
 Start a local Anvil node:
@@ -85,29 +68,50 @@ Start a local Anvil node:
 anvil
 ```
 
-The default RPC endpoint is:
+The default RPC endpoint is: `http://127.0.0.1:8545`
 
-```text
-http://127.0.0.1:8545
-```
-
-Then deploy or interact with contracts using Foundry's `forge` command.
+Then deploy contracts using Foundry's `forge` command.
 
 ```bash
 forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-From now on, all contracts have been deployed to the local Anvil blockchain, and you can start the Backend via RPC to interact with the smart contracts.
+From now on, all contracts have been deployed to the local Anvil blockchain, and you can start the [Backend](https://github.com/NettedX/NettedX-back) to interact with the smart contracts via RPC .
+
+
+## Docker Deployment
+
+> For production or users.
+
+The project provides a Dockerized development environment containing an Anvil private blockchain and the NettedX smart contracts.
+
+### Prerequisites
+
+- Docker
+- Docker Compose
+- Cloned repository with submodules initialized
+
+No local Foundry installation is required.
+
+### Configuration
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Change the variables in `.env` as needed.
+
+### Build and Run
+
+```bash
+docker-compose up --build
+```
 
 ## Available Commands
 
 ### Format
-
-Check whether the contracts follow the project's formatting rules:
-
-```bash
-forge fmt --check
-```
 
 To automatically format the code:
 
@@ -122,26 +126,6 @@ Run the complete test suite:
 ```bash
 forge test -vvv
 ```
-
-For more detailed execution traces:
-
-```bash
-forge test -vvvv
-```
-
-You can also run a specific test file:
-
-```bash
-forge test --match-path test/unit/Netting.t.sol -vvv
-```
-
-The test suite covers the main components of the system, including:
-
-* Netting
-* Settlement
-* LiquidityPool
-* Mock tokens
-* End-to-end settlement flow
 
 ## Contract Interaction
 
@@ -198,50 +182,7 @@ The ABI can be used by the backend or frontend to interact with the deployed sma
 
 ## Environment Variables
 
-For local development, you can use a `.env` file:
-
-```text
-RPC_URL=http://127.0.0.1:8545
-PRIVATE_KEY=your_private_key
-```
-
-Do not commit private keys to GitHub.
-
-Make sure `.env` is included in `.gitignore`:
-
-```text
-.env
-```
-
-## Docker Deployment
-
-> For production or users.
-
-The project provides a Dockerized development environment containing an Anvil private blockchain and the NettedX smart contracts.
-
-### Prerequisites
-
-- Docker
-- Docker Compose
-- Cloned repository with submodules initialized
-
-No local Foundry installation is required.
-
-### Configuration
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env
-```
-
-Change the variables in `.env` as needed.
-
-### Build and Run
-
-```bash
-docker-compose up --build
-```
+You can use a `.env` file to config the project, please refer to `.env.example` for the required variables.
 
 ## Common Dependency Issues
 
@@ -290,7 +231,7 @@ Finally, verify that the working tree is clean:
 git status
 ```
 
-### CI
+## CI
 
 Every push and pull request runs the Foundry CI pipeline, which checks:
 
@@ -360,6 +301,4 @@ Connect Backend / Frontend
 
 ## Repository
 
-GitHub:
-
-[NettedX-Blockchain](https://github.com/NettedX/NettedX-Blockchain.git?utm_source=chatgpt.com)
+GitHub: [NettedX-Blockchain](https://github.com/NettedX/NettedX-Blockchain.git?utm_source=chatgpt.com)
