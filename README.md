@@ -2,22 +2,16 @@
 
 NettedX Blockchain is the smart contract layer of the NettedX settlement system.
 
-The project implements blockchain-based trade netting and settlement using Solidity and Foundry. It includes settlement management, netting, liquidity pool management, ERC-20 test tokens, and dashboard metrics accessible through Ethereum JSON-RPC.
+The project implements blockchain-based trade netting and settlement using Solidity and Foundry. It includes settlement management, netting, liquidity pool management, ERC-20 test tokens, and other functionalities.
 
-## Get Started
-
-### Prerequisites
+## Prerequisites
 
 Make sure the following tools are installed:
 
-* Foundry
+* [Foundry](https://github.com/foundry-rs/foundry)
 * Git
 
-On macOS, Foundry can be installed with Homebrew:
-
-```bash
-brew install foundry
-```
+> Tips: On macOS, Foundry can be installed with Homebrew.
 
 Verify the installation:
 
@@ -25,12 +19,10 @@ Verify the installation:
 forge --version
 ```
 
-You should also have `cast` and `anvil` available:
+## Get Started
 
-```bash
-cast --version
-anvil --version
-```
+> For developers.
+> Quickstart for users is available in the [Docker Deployment](#docker-deployment) section.
 
 ### Clone the Repository
 
@@ -68,19 +60,58 @@ Compile all Solidity contracts:
 forge build
 ```
 
-To display contract bytecode sizes:
+### Local Development
+
+Start a local Anvil node:
 
 ```bash
-forge build --sizes
+anvil
 ```
+
+The default RPC endpoint is: `http://127.0.0.1:8545`
+
+Then deploy contracts using Foundry's `forge` command.
+
+```bash
+forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+From now on, all contracts have been deployed to the local Anvil blockchain, and you can start the [Backend](https://github.com/NettedX/NettedX-back) to interact with the smart contracts via RPC .
+
+
+## Docker Deployment
+
+> For production or users.
+
+The project provides a Dockerized development environment containing an Anvil private blockchain and the NettedX smart contracts.
+
+### Prerequisites
+
+- Docker
+- Docker Compose
+- Cloned repository with submodules initialized
+
+No local Foundry installation is required.
+
+### Configuration
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Change the variables in `.env` as needed.
+
+### Build and Run
+
+```bash
+docker-compose up --build
+```
+
+## Available Commands
 
 ### Format
-
-Check whether the contracts follow the project's formatting rules:
-
-```bash
-forge fmt --check
-```
 
 To automatically format the code:
 
@@ -96,71 +127,7 @@ Run the complete test suite:
 forge test -vvv
 ```
 
-For more detailed execution traces:
-
-```bash
-forge test -vvvv
-```
-
-You can also run a specific test file:
-
-```bash
-forge test --match-path test/unit/Netting.t.sol -vvv
-```
-
-The test suite covers the main components of the system, including:
-
-* Netting
-* Settlement
-* LiquidityPool
-* Mock tokens
-* End-to-end settlement flow
-
-### Local Development
-
-Start a local Anvil node:
-
-```bash
-anvil
-```
-
-The default RPC endpoint is:
-
-```text
-http://127.0.0.1:8545
-```
-
-Then deploy or interact with contracts using Foundry's `forge` and `cast` commands.
-
-The deployment script is located at:
-
-```text
-script/Deploy.s.sol
-```
-
-The deployment flow is:
-
-```text
-MockUSDC
-   ↓
-MockBond
-   ↓
-Settlement
-   ↓
-Netting
-   ↓
-LiquidityPool
-```
-
-After deploying `Netting`, the `Settlement` contract must be connected to it:
-
-```solidity
-settlement.setNetting(address(netting));
-```
-
-This allows `Netting` to execute settlement operations through the `Settlement` contract.
-
-### Contract Interaction
+## Contract Interaction
 
 After deployment, contract addresses can be used with `cast` to interact with the blockchain.
 
@@ -189,49 +156,7 @@ MockUSDC
 MockBond
 ```
 
-### Dashboard Metrics
-
-The `Netting` contract provides dashboard metrics through:
-
-```solidity
-getDashboardMetrics()
-```
-
-It returns:
-
-```text
-totalSettlementAmount
-netSettlementAmount
-liquiditySaved
-obligationReduction
-```
-
-The function can be called through JSON-RPC using `cast`:
-
-```bash
-cast call \
-  $NETTING \
-  "getDashboardMetrics()(uint256,uint256,uint256,uint256)" \
-  --rpc-url $RPC_URL
-```
-
-These metrics can be queried by the backend through the blockchain's JSON-RPC endpoint.
-
-The backend needs:
-
-```text
-RPC URL
-Netting contract address
-Netting ABI
-```
-
-For local development, the RPC endpoint is:
-
-```text
-http://127.0.0.1:8545
-```
-
-### ABI
+## ABI
 
 After running:
 
@@ -255,24 +180,11 @@ The generated artifact contains the contract ABI and bytecode.
 
 The ABI can be used by the backend or frontend to interact with the deployed smart contract.
 
-### Environment Variables
+## Environment Variables
 
-For local development, you can use a `.env` file:
+You can use a `.env` file to config the project, please refer to `.env.example` for the required variables.
 
-```text
-RPC_URL=http://127.0.0.1:8545
-PRIVATE_KEY=your_private_key
-```
-
-Do not commit private keys to GitHub.
-
-Make sure `.env` is included in `.gitignore`:
-
-```text
-.env
-```
-
-### Common Dependency Issues
+## Common Dependency Issues
 
 If Foundry reports dependency or submodule errors, first make sure all submodules are initialized and synchronized:
 
@@ -319,7 +231,7 @@ Finally, verify that the working tree is clean:
 git status
 ```
 
-### CI
+## CI
 
 Every push and pull request runs the Foundry CI pipeline, which checks:
 
@@ -337,7 +249,7 @@ forge build --sizes
 forge test -vvv
 ```
 
-### Project Structure
+## Project Structure
 
 The main project structure is:
 
@@ -363,7 +275,7 @@ NettedX-Blockchain/
 └── README.md
 ```
 
-### Development Workflow
+## Development Workflow
 
 The recommended local development workflow is:
 
@@ -387,8 +299,6 @@ Interact Using cast
 Connect Backend / Frontend
 ```
 
-### Repository
+## Repository
 
-GitHub:
-
-[NettedX-Blockchain](https://github.com/NettedX/NettedX-Blockchain.git?utm_source=chatgpt.com)
+GitHub: [NettedX-Blockchain](https://github.com/NettedX/NettedX-Blockchain.git?utm_source=chatgpt.com)
