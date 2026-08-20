@@ -60,6 +60,18 @@ jobs:
     needs: docker
 
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Upload deployment files
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.VPC_HOST }}
+        username: ${{ secrets.VPC_USERNAME }}
+        password: ${{ secrets.VPC_PASSWORD }}
+        source: ".env.example,docker-compose.prod.yml"
+        target: "/opt/NettedX/NettedX-Blockchain"
+
     - name: Deploy to VPC
       uses: appleboy/ssh-action@v1.2.0
       with:
