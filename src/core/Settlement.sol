@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../interfaces/INetting.sol";
 import "../interfaces/ISettlement.sol";
-import "../interfaces/ILiquidityPool.sol";
+import "../interfaces/ILiquidityBuffer.sol";
 
 import "../libraries/Types.sol";
 import "../libraries/Errors.sol";
@@ -29,11 +29,11 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
     address public netting;
 
     /**
-     * @notice Liquidity Pool contract address.
+     * @notice Liquidity Buffer contract address.
      *
-     * LiquidityPool is configured after deployment.
+     * LiquidityBuffer is configured after deployment.
      */
-    address public liquidityPool;
+    address public liquidityBuffer;
 
     // =============================================================
     // Constructor
@@ -62,19 +62,19 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Set Liquidity Pool contract address.
+     * @notice Set Liquidity Buffer contract address.
      * @dev Can only be called once by the owner.
      */
-    function setLiquidityPool(address liquidityPool_) external onlyOwner {
-        if (liquidityPool != address(0)) {
-            revert Errors.LiquidityPoolAlreadySet();
+    function setLiquidityBuffer(address liquidityBuffer_) external onlyOwner {
+        if (liquidityBuffer != address(0)) {
+            revert Errors.LiquidityBufferAlreadySet();
         }
 
-        if (liquidityPool_ == address(0)) {
+        if (liquidityBuffer_ == address(0)) {
             revert Errors.ZeroAddress();
         }
 
-        liquidityPool = liquidityPool_;
+        liquidityBuffer = liquidityBuffer_;
     }
 
     // =============================================================
@@ -111,19 +111,19 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
      *             ↓
      *     Payer pays what they have
      *             ↓
-     *     LiquidityPool provides shortfall
+     *     LiquidityBuffer provides shortfall
      *             ↓
      *     Settlement -> Receiver
      *
-     * The LiquidityPool records the shortfall as debt.
+     * The LiquidityBuffer records the shortfall as debt.
      */
     function settle(Types.NetPosition[] calldata positions) external override onlyNetting nonReentrant {
         if (positions.length == 0) {
             revert Errors.InvalidPosition();
         }
 
-        if (liquidityPool == address(0)) {
-            revert Errors.LiquidityPoolNotSet();
+        if (liquidityBuffer == address(0)) {
+            revert Errors.LiquidityBufferNotSet();
         }
 
         uint256 transferCount = 0;
@@ -192,13 +192,13 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
                 uint256 payerAmount = balance < amount ? balance : amount;
 
                 // =================================================
-                // Liquidity Pool covers the shortfall.
+                // Liquidity Buffer covers the shortfall.
                 // =================================================
 
-                uint256 poolAmount = amount - payerAmount;
+                uint256 bufferAmount = amount - payerAmount;
 
-                if (poolAmount > 0) {
-                    ILiquidityPool(liquidityPool).provideLiquidity(asset, payer, poolAmount);
+                if (bufferAmount > 0) {
+                    ILiquidityBuffer(liquidityBuffer).provideLiquidity(asset, payer, bufferAmount);
                 }
 
                 // =================================================
@@ -214,13 +214,13 @@ contract Settlement is ISettlement, ReentrancyGuard, Ownable {
                 }
 
                 // =================================================
-                // LiquidityPool funds are now sitting in Settlement.
+                // LiquidityBuffer funds are now sitting in Settlement.
                 //
                 // Send them to receiver.
                 // =================================================
 
-                if (poolAmount > 0) {
-                    token.safeTransfer(receiver, poolAmount);
+                if (bufferAmount > 0) {
+                    token.safeTransfer(receiver, bufferAmount);
                 }
 
                 emit Events.Transferred(INetting(netting).currentWindowId(), asset, payer, receiver, amount);

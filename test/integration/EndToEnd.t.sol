@@ -8,7 +8,7 @@ import {MockBond} from "../../src/tokens/MockBond.sol";
 
 import {Settlement} from "../../src/core/Settlement.sol";
 import {Netting} from "../../src/core/Netting.sol";
-import {LiquidityPool} from "../../src/core/LiquidityPool.sol";
+import {LiquidityBuffer} from "../../src/core/LiquidityBuffer.sol";
 
 contract EndToEndTest is Test {
     MockUSDC usdc;
@@ -16,7 +16,7 @@ contract EndToEndTest is Test {
 
     Settlement settlement;
     Netting netting;
-    LiquidityPool liquidityPool;
+    LiquidityBuffer liquidityBuffer;
 
     address alice;
     address bob;
@@ -47,10 +47,10 @@ contract EndToEndTest is Test {
         settlement = new Settlement();
 
         // ==================================================
-        // 4. Deploy LiquidityPool
+        // 4. Deploy LiquidityBuffer
         // ==================================================
 
-        liquidityPool = new LiquidityPool();
+        liquidityBuffer = new LiquidityBuffer();
 
         // ==================================================
         // 5. Deploy Netting
@@ -65,11 +65,11 @@ contract EndToEndTest is Test {
         // Settlement -> Netting
         settlement.setNetting(address(netting));
 
-        // Settlement -> LiquidityPool
-        settlement.setLiquidityPool(address(liquidityPool));
+        // Settlement -> LiquidityBuffer
+        settlement.setLiquidityBuffer(address(liquidityBuffer));
 
-        // LiquidityPool -> Settlement
-        liquidityPool.setSettlement(address(settlement));
+        // LiquidityBuffer -> Settlement
+        liquidityBuffer.setSettlement(address(settlement));
 
         // ==================================================
         // 7. Mint user assets
@@ -79,7 +79,7 @@ contract EndToEndTest is Test {
         bond.mint(bob, 10);
 
         // ==================================================
-        // 8. Mint liquidity for LiquidityPool
+        // 8. Mint liquidity for LiquidityBuffer
         // ==================================================
 
         usdc.mint(liquidityProvider, 1_000 * USDC);
@@ -102,15 +102,15 @@ contract EndToEndTest is Test {
 
         vm.prank(liquidityProvider);
 
-        usdc.approve(address(liquidityPool), type(uint256).max);
+        usdc.approve(address(liquidityBuffer), type(uint256).max);
 
         // ==================================================
-        // 11. Deposit USDC into LiquidityPool
+        // 11. Deposit USDC into LiquidityBuffer
         // ==================================================
 
         vm.prank(liquidityProvider);
 
-        liquidityPool.deposit(address(usdc), 1_000 * USDC);
+        liquidityBuffer.deposit(address(usdc), 1_000 * USDC);
     }
 
     function testFullFlow() public {
@@ -126,7 +126,7 @@ contract EndToEndTest is Test {
 
         assertEq(bond.balanceOf(bob), 10);
 
-        assertEq(liquidityPool.liquidity(address(usdc)), 1_000 * USDC);
+        assertEq(liquidityBuffer.liquidity(address(usdc)), 1_000 * USDC);
 
         // ==================================================
         // 2. Submit trade
@@ -192,7 +192,7 @@ contract EndToEndTest is Test {
         assertEq(bond.balanceOf(bob), 5);
 
         // ==================================================
-        // 7. LiquidityPool
+        // 7. LiquidityBuffer
         //
         // This trade does NOT need liquidity because
         // Alice has enough USDC.
@@ -200,13 +200,13 @@ contract EndToEndTest is Test {
         // Therefore:
         //
         // Initial liquidity = 1000 USDC
-        // Pool liquidity    = 1000 USDC
+        // Buffer liquidity    = 1000 USDC
         // Debt              = 0
         // ==================================================
 
-        assertEq(liquidityPool.liquidity(address(usdc)), 1_000 * USDC);
+        assertEq(liquidityBuffer.liquidity(address(usdc)), 1_000 * USDC);
 
-        assertEq(liquidityPool.debt(alice, address(usdc)), 0);
+        assertEq(liquidityBuffer.debt(alice, address(usdc)), 0);
 
         // ==================================================
         // 8. Window should advance
@@ -233,10 +233,10 @@ contract EndToEndTest is Test {
         assertEq(usdc.balanceOf(alice), 200 * USDC);
 
         // ==================================================
-        // 2. LiquidityPool has 1000 USDC
+        // 2. LiquidityBuffer has 1000 USDC
         // ==================================================
 
-        assertEq(liquidityPool.liquidity(address(usdc)), 1_000 * USDC);
+        assertEq(liquidityBuffer.liquidity(address(usdc)), 1_000 * USDC);
 
         // ==================================================
         // 3. Alice buys 5 BOND for 500 USDC
@@ -267,7 +267,7 @@ contract EndToEndTest is Test {
         // 200 USDC -> 0 USDC
         // 0 BOND   -> 5 BOND
         //
-        // LiquidityPool:
+        // LiquidityBuffer:
         // provides 300 USDC
         //
         // Bob:
@@ -284,17 +284,17 @@ contract EndToEndTest is Test {
         assertEq(bond.balanceOf(bob), 5);
 
         // ==================================================
-        // 7. LiquidityPool state
+        // 7. LiquidityBuffer state
         //
         // Initial liquidity = 1000
-        // Pool provides     = 300
+        // Buffer provides     = 300
         // Remaining         = 700
         // ==================================================
 
-        assertEq(liquidityPool.liquidity(address(usdc)), 700 * USDC);
+        assertEq(liquidityBuffer.liquidity(address(usdc)), 700 * USDC);
 
-        // Alice now owes the Pool 300 USDC.
-        assertEq(liquidityPool.debt(alice, address(usdc)), 300 * USDC);
+        // Alice now owes the Buffer 300 USDC.
+        assertEq(liquidityBuffer.debt(alice, address(usdc)), 300 * USDC);
 
         // ==================================================
         // 8. Alice repays the debt
@@ -304,22 +304,22 @@ contract EndToEndTest is Test {
 
         vm.prank(alice);
 
-        usdc.approve(address(liquidityPool), 300 * USDC);
+        usdc.approve(address(liquidityBuffer), 300 * USDC);
 
         vm.prank(alice);
 
-        liquidityPool.repay(address(usdc), 300 * USDC);
+        liquidityBuffer.repay(address(usdc), 300 * USDC);
 
         // ==================================================
         // 9. Debt should be zero
         // ==================================================
 
-        assertEq(liquidityPool.debt(alice, address(usdc)), 0);
+        assertEq(liquidityBuffer.debt(alice, address(usdc)), 0);
 
         // ==================================================
         // 10. Liquidity should be restored
         // ==================================================
 
-        assertEq(liquidityPool.liquidity(address(usdc)), 1_000 * USDC);
+        assertEq(liquidityBuffer.liquidity(address(usdc)), 1_000 * USDC);
     }
 }
