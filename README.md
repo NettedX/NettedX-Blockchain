@@ -2,7 +2,7 @@
 
 NettedX Blockchain is the smart contract layer of the NettedX settlement system.
 
-The project implements blockchain-based trade netting and settlement using Solidity and Foundry. It includes settlement management, netting, liquidity pool management, ERC-20 test tokens, and other functionalities.
+The project implements blockchain-based trade netting and settlement using Solidity and Foundry. It includes settlement management, netting, liquidity buffer management, ERC-20 test tokens, and other functionalities.
 
 ## Prerequisites
 
@@ -151,7 +151,7 @@ The main contracts are:
 ```text
 Netting
 Settlement
-LiquidityPool
+LiquidityBuffer
 MockUSDC
 MockBond
 ```
@@ -259,7 +259,7 @@ NettedX-Blockchain/
 │   ├── core/
 │   │   ├── Netting.sol
 │   │   ├── Settlement.sol
-│   │   └── LiquidityPool.sol
+│   │   └── LiquidityBuffer.sol
 │   ├── interfaces/
 │   └── libraries/
 ├── test/

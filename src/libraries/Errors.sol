@@ -22,6 +22,6 @@ library Errors {
     error InsufficientAllowance();
 
     error InvalidAsset();
-    error LiquidityPoolAlreadySet();
-    error LiquidityPoolNotSet();
+    error LiquidityBufferAlreadySet();
+    error LiquidityBufferNotSet();
 }

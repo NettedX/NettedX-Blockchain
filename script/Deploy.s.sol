@@ -8,12 +8,12 @@ import {MockBond} from "../src/tokens/MockBond.sol";
 
 import {Settlement} from "../src/core/Settlement.sol";
 import {Netting} from "../src/core/Netting.sol";
-import {LiquidityPool} from "../src/core/LiquidityPool.sol";
+import {LiquidityBuffer} from "../src/core/LiquidityBuffer.sol";
 
 contract Deploy is Script {
     function run()
         external
-        returns (MockUSDC usdc, MockBond bond, Settlement settlement, Netting netting, LiquidityPool liquidityPool)
+        returns (MockUSDC usdc, MockBond bond, Settlement settlement, Netting netting, LiquidityBuffer liquidityBuffer)
     {
         // =========================================================
         // Get deployer private key
@@ -56,10 +56,10 @@ contract Deploy is Script {
         netting = new Netting(deployer, address(usdc), address(bond), address(settlement));
 
         // =========================================================
-        // 5. Deploy LiquidityPool
+        // 5. Deploy LiquidityBuffer
         // =========================================================
 
-        liquidityPool = new LiquidityPool();
+        liquidityBuffer = new LiquidityBuffer();
 
         // =========================================================
         // 6. Initialize Settlement -> Netting
@@ -68,16 +68,16 @@ contract Deploy is Script {
         settlement.setNetting(address(netting));
 
         // =========================================================
-        // 7. Initialize Settlement -> LiquidityPool
+        // 7. Initialize Settlement -> LiquidityBuffer
         // =========================================================
 
-        settlement.setLiquidityPool(address(liquidityPool));
+        settlement.setLiquidityBuffer(address(liquidityBuffer));
 
         // =========================================================
-        // 8. Initialize LiquidityPool -> Settlement
+        // 8. Initialize LiquidityBuffer -> Settlement
         // =========================================================
 
-        liquidityPool.setSettlement(address(settlement));
+        liquidityBuffer.setSettlement(address(settlement));
 
         // =========================================================
         // Stop deployment
@@ -97,6 +97,6 @@ contract Deploy is Script {
 
         console2.log("NETTING:", address(netting));
 
-        console2.log("LIQUIDITY_POOL:", address(liquidityPool));
+        console2.log("LIQUIDITY_BUFFER:", address(liquidityBuffer));
     }
 }

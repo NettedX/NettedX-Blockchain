@@ -6,9 +6,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-import "../interfaces/ILiquidityPool.sol";
+import "../interfaces/ILiquidityBuffer.sol";
 
-contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
+contract LiquidityBuffer is ILiquidityBuffer, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /**
@@ -39,10 +39,10 @@ contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
     mapping(address => mapping(address => uint256)) public override debt;
 
     /**
-     * @notice Create LiquidityPool.
+     * @notice Create LiquidityBuffer.
      *
      * Settlement is configured separately because
-     * LiquidityPool and Settlement may have deployment
+     * LiquidityBuffer and Settlement may have deployment
      * dependencies.
      */
     constructor() Ownable(msg.sender) {}
@@ -69,7 +69,7 @@ contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Deposit tokens into the pool.
+     * @notice Deposit tokens into the buffer.
      */
     function deposit(address asset, uint256 amount) external override nonReentrant {
         require(asset != address(0), "Zero asset");
@@ -109,7 +109,7 @@ contract LiquidityPool is ILiquidityPool, Ownable, ReentrancyGuard {
      * This function does NOT transfer tokens to the debtor.
      *
      * It transfers the required amount directly from the
-     * LiquidityPool to Settlement.
+     * LiquidityBuffer to Settlement.
      *
      * Settlement can then use those funds to complete
      * the settlement process.

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-interface ILiquidityPool {
+interface ILiquidityBuffer {
     /**
-     * @notice Deposit ERC20 tokens into the liquidity pool.
+     * @notice Deposit ERC20 tokens into the liquidity buffer.
      */
     function deposit(address asset, uint256 amount) external;
 
