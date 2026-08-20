@@ -279,6 +279,83 @@ contract NettingTest is Test {
         assertEq(positions[3].amount, -int256(5));
     }
 
+    function testSettlementWindowForecast() public {
+        uint256 startBlock = netting.windowStartBlock();
+
+        Types.SettlementWindowForecast memory forecast = netting.getSettlementWindowForecast();
+
+        assertEq(forecast.windowId, 0);
+        assertEq(forecast.settlementBlock, startBlock + 13);
+        assertEq(forecast.blocksRemaining, 13);
+
+        vm.roll(startBlock + 10);
+
+        forecast = netting.getSettlementWindowForecast();
+
+        assertEq(forecast.blocksRemaining, 3);
+
+        vm.roll(startBlock + 13);
+
+        forecast = netting.getSettlementWindowForecast();
+
+        assertEq(forecast.blocksRemaining, 0);
+    }
+
+    function testBankNetPositionsSeparatePayablesAndReceivables() public {
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        Types.BankNetPosition[] memory positions = netting.getBankNetPositions(alice);
+
+        assertEq(positions.length, 2);
+
+        assertEq(positions[0].asset, address(usdc));
+        assertEq(positions[0].payableAmount, 500 * USDC);
+        assertEq(positions[0].receivableAmount, 0);
+
+        assertEq(positions[1].asset, address(bond));
+        assertEq(positions[1].payableAmount, 0);
+        assertEq(positions[1].receivableAmount, 5);
+    }
+
+    function testBankSettlementAssetRequirementsOnlyIncludePayables() public {
+        netting.submitTrade(alice, bob, 500 * USDC, 5);
+
+        Types.SettlementAssetRequirement[] memory aliceRequirements = netting.getBankSettlementAssetRequirements(alice);
+        Types.SettlementAssetRequirement[] memory bobRequirements = netting.getBankSettlementAssetRequirements(bob);
+
+        assertEq(aliceRequirements.length, 1);
+        assertEq(aliceRequirements[0].asset, address(usdc));
+        assertEq(aliceRequirements[0].requiredAmount, 500 * USDC);
+
+        assertEq(bobRequirements.length, 1);
+        assertEq(bobRequirements[0].asset, address(bond));
+        assertEq(bobRequirements[0].requiredAmount, 5);
+    }
+
+    function testBankLiquidityShortfallsReturnExpectedBorrowAmount() public {
+        usdc.mint(charlie, 200 * USDC);
+        netting.submitTrade(charlie, bob, 500 * USDC, 5);
+
+        Types.LiquidityShortfall[] memory shortfalls = netting.getBankLiquidityShortfalls(charlie);
+
+        assertEq(shortfalls.length, 1);
+        assertEq(shortfalls[0].asset, address(usdc));
+        assertEq(shortfalls[0].requiredAmount, 500 * USDC);
+        assertEq(shortfalls[0].availableBalance, 200 * USDC);
+        assertEq(shortfalls[0].borrowAmount, 300 * USDC);
+    }
+
+    function testDashboardInterfacesRejectZeroBankAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        netting.getBankNetPositions(address(0));
+
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        netting.getBankSettlementAssetRequirements(address(0));
+
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        netting.getBankLiquidityShortfalls(address(0));
+    }
+
     // ============================================================
     // 8. Execute successful settlement
     // ============================================================

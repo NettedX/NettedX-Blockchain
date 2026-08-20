@@ -2,6 +2,8 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "../libraries/Types.sol";
 import "../libraries/Constants.sol";
@@ -175,6 +177,95 @@ contract Netting is Ownable {
     }
 
     /**
+     * @notice Forecast the next settlement using block numbers only.
+     */
+    function getSettlementWindowForecast() external view returns (Types.SettlementWindowForecast memory forecast) {
+        forecast.windowId = currentWindowId;
+        forecast.settlementBlock = windowStartBlock + Constants.SETTLEMENT_BLOCK_OFFSET;
+        forecast.blocksRemaining =
+            block.number >= forecast.settlementBlock ? 0 : forecast.settlementBlock - block.number;
+    }
+
+    /**
+     * @notice Return the selected bank's payable and receivable amounts by asset.
+     */
+    function getBankNetPositions(address bank) external view returns (Types.BankNetPosition[] memory) {
+        return _getBankNetPositions(bank);
+    }
+
+    /**
+     * @notice Return the assets and amounts the selected bank must provide for settlement.
+     */
+    function getBankSettlementAssetRequirements(address bank)
+        external
+        view
+        returns (Types.SettlementAssetRequirement[] memory requirements)
+    {
+        Types.BankNetPosition[] memory bankPositions = _getBankNetPositions(bank);
+        uint256 count;
+
+        for (uint256 i = 0; i < bankPositions.length; i++) {
+            if (bankPositions[i].payableAmount > 0) {
+                count++;
+            }
+        }
+
+        requirements = new Types.SettlementAssetRequirement[](count);
+        uint256 index;
+
+        for (uint256 i = 0; i < bankPositions.length; i++) {
+            if (bankPositions[i].payableAmount == 0) {
+                continue;
+            }
+
+            requirements[index] = Types.SettlementAssetRequirement({
+                asset: bankPositions[i].asset, requiredAmount: bankPositions[i].payableAmount
+            });
+            index++;
+        }
+    }
+
+    /**
+     * @notice Estimate how much the selected bank must borrow for each required asset.
+     */
+    function getBankLiquidityShortfalls(address bank)
+        external
+        view
+        returns (Types.LiquidityShortfall[] memory shortfalls)
+    {
+        Types.BankNetPosition[] memory bankPositions = _getBankNetPositions(bank);
+        uint256 count;
+
+        for (uint256 i = 0; i < bankPositions.length; i++) {
+            if (bankPositions[i].payableAmount > 0) {
+                count++;
+            }
+        }
+
+        shortfalls = new Types.LiquidityShortfall[](count);
+        uint256 index;
+
+        for (uint256 i = 0; i < bankPositions.length; i++) {
+            uint256 requiredAmount = bankPositions[i].payableAmount;
+
+            if (requiredAmount == 0) {
+                continue;
+            }
+
+            uint256 availableBalance = IERC20(bankPositions[i].asset).balanceOf(bank);
+            uint256 borrowAmount = availableBalance >= requiredAmount ? 0 : requiredAmount - availableBalance;
+
+            shortfalls[index] = Types.LiquidityShortfall({
+                asset: bankPositions[i].asset,
+                requiredAmount: requiredAmount,
+                availableBalance: availableBalance,
+                borrowAmount: borrowAmount
+            });
+            index++;
+        }
+    }
+
+    /**
      * @notice Return public analytics metrics for the current window.
      */
     function getPublicAnalyticsMetrics()
@@ -228,6 +319,39 @@ contract Netting is Ownable {
      */
     function getTrade(uint256 windowId, uint256 tradeId) external view returns (Types.Trade memory) {
         return trades[windowId][tradeId];
+    }
+
+    function _getBankNetPositions(address bank) internal view returns (Types.BankNetPosition[] memory result) {
+        if (bank == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        Types.NetPosition[] memory positions = _calculateNetPositions(currentWindowId);
+        uint256 count;
+
+        for (uint256 i = 0; i < positions.length; i++) {
+            if (positions[i].participant == bank && positions[i].amount != 0) {
+                count++;
+            }
+        }
+
+        result = new Types.BankNetPosition[](count);
+        uint256 index;
+
+        for (uint256 i = 0; i < positions.length; i++) {
+            if (positions[i].participant != bank || positions[i].amount == 0) {
+                continue;
+            }
+
+            int256 amount = positions[i].amount;
+
+            result[index] = Types.BankNetPosition({
+                asset: positions[i].asset,
+                payableAmount: amount < 0 ? SafeCast.toUint256(-amount) : 0,
+                receivableAmount: amount > 0 ? SafeCast.toUint256(amount) : 0
+            });
+            index++;
+        }
     }
 
     /**
