@@ -8,7 +8,7 @@ import {MockBond} from "../../src/tokens/MockBond.sol";
 
 import {Settlement} from "../../src/core/Settlement.sol";
 import {Netting} from "../../src/core/Netting.sol";
-import {LiquidityPool} from "../../src/core/LiquidityPool.sol";
+import {LiquidityBuffer} from "../../src/core/LiquidityBuffer.sol";
 import {Types} from "../../src/libraries/Types.sol";
 import {Errors} from "../../src/libraries/Errors.sol";
 
@@ -18,7 +18,7 @@ contract NettingTest is Test {
 
     Settlement settlement;
     Netting netting;
-    LiquidityPool liquidityPool;
+    LiquidityBuffer liquidityBuffer;
 
     address alice;
     address bob;
@@ -38,8 +38,8 @@ contract NettingTest is Test {
         // Deploy Settlement
         settlement = new Settlement();
 
-        // Deploy LiquidityPool
-        liquidityPool = new LiquidityPool();
+        // Deploy LiquidityBuffer
+        liquidityBuffer = new LiquidityBuffer();
 
         // Deploy Netting
         netting = new Netting(address(this), address(usdc), address(bond), address(settlement));
@@ -47,11 +47,11 @@ contract NettingTest is Test {
         // Two-phase initialization
         settlement.setNetting(address(netting));
 
-        // Settlement -> LiquidityPool
-        settlement.setLiquidityPool(address(liquidityPool));
+        // Settlement -> LiquidityBuffer
+        settlement.setLiquidityBuffer(address(liquidityBuffer));
 
-        // LiquidityPool -> Settlement
-        liquidityPool.setSettlement(address(settlement));
+        // LiquidityBuffer -> Settlement
+        liquidityBuffer.setSettlement(address(settlement));
 
         // Initial balances
         usdc.mint(alice, 1_000 * USDC);
