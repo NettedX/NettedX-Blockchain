@@ -17,5 +17,9 @@ docs/
 .env.*
 !.env.example
 
-# anvil-data
-anvil_state.json
+# data
+anvil-data/
+address-data/
+
+# DS_Store files
+.DS_Store
