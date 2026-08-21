@@ -197,6 +197,7 @@ jobs:
 
           echo "Restarting backend service"
           cd /opt/NettedX/nettedx-back
-          docker compose -f ./docker-compose.prod.yml restart nettedx-back
+          docker compose -f docker-compose.prod.yml restart
+          docker compose -f docker-compose.prod.yml ps
 
           echo "Deployment completed successfully."
