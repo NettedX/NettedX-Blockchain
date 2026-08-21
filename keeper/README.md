@@ -1,6 +1,6 @@
 # NettedX Automatic Window Operator
 
-This operator removes the need to manually freeze and settle every window.
+This Python operator removes the need to manually freeze and settle every window. It listens for new blocks through WebSocket and signs transactions locally with the Netting owner key.
 
 ## Timeline
 
@@ -19,16 +19,30 @@ Start Anvil with interval mining so blocks continue even when no user sends a tr
 anvil --block-time 2 --chain-id 31337
 ```
 
-Deploy the contracts with `script/Deploy.s.sol`, then set the Netting address and the private key of the Netting owner:
+Create a Python environment and install the keeper dependency:
 
 ```powershell
-$env:RPC_URL = "http://127.0.0.1:8545"
+python -m venv .\keeper\.venv
+.\keeper\.venv\Scripts\Activate.ps1
+pip install -r .\keeper\requirements.txt
+```
+
+Deploy the contracts with `script/Deploy.s.sol`, then set the WebSocket RPC URL, Netting address and Netting owner private key:
+
+```powershell
+$env:WS_RPC_URL = "ws://127.0.0.1:8545"
 $env:NETTING_ADDRESS = "0xYourNettingAddress"
 $env:PRIVATE_KEY = "0xYourOwnerPrivateKey"
 
-.\keeper\auto-window.ps1
+python .\keeper\auto_window.py
 ```
 
-Keep the operator process running. It polls the read-only `automationState()` function and only sends a transaction when freezing or settlement is due.
+Keep the operator process running. It subscribes to `newHeads`, reads `automationState()` after every new block, and only sends a signed transaction when freezing or settlement is due. On startup and after reconnecting, it checks the current state immediately so short disconnections do not skip due actions.
+
+Optional environment variables:
+
+- `RECONNECT_DELAY_SECONDS` (default `3`)
+- `RECEIPT_TIMEOUT_SECONDS` (default `30`)
+- `MAX_CATCH_UP_ACTIONS` (default `20`)
 
 Use only test keys on Anvil. Never commit a private key or reuse the public Anvil test keys on a production network.
