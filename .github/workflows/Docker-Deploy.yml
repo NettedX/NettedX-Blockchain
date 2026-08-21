@@ -190,3 +190,13 @@ jobs:
           PY
 
           echo "Backend .env updated successfully."
+
+          # =========================================================
+          # Restart backend service
+          # =========================================================
+
+          echo "Restarting backend service"
+          cd /opt/NettedX/nettedx-back
+          docker compose -f ./docker-compose.prod.yml restart nettedx-back
+
+          echo "Deployment completed successfully."
