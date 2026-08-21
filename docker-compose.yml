@@ -32,7 +32,7 @@ services:
       - "${ANVIL_PORT}:${ANVIL_PORT}"
 
     volumes:
-      - anvil-data:/var/data
+      - ./anvil-data:/var/data
 
     healthcheck:
       test:
@@ -72,5 +72,6 @@ services:
       - ${RPC_URL}
       - --broadcast
 
-volumes:
-  anvil-data:
+    volumes:
+      - ./broadcast:/app/broadcast
+      - ./address-data:/app/address-data

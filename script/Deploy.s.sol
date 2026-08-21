@@ -98,5 +98,25 @@ contract Deploy is Script {
         console2.log("NETTING:", address(netting));
 
         console2.log("LIQUIDITY_BUFFER:", address(liquidityBuffer));
+
+        // =========================================================
+        // Generate contract address file
+        // =========================================================
+
+        string memory filePath = "./address-data/addresses.json";
+
+        string memory json = vm.serializeAddress("addresses", "NETTEDX_MOCK_USDC_CONTRACT_ADDRESS", address(usdc));
+
+        json = vm.serializeAddress("addresses", "NETTEDX_MOCK_BOND_CONTRACT_ADDRESS", address(bond));
+
+        json = vm.serializeAddress("addresses", "NETTEDX_SETTLEMENT_CONTRACT_ADDRESS", address(settlement));
+
+        json = vm.serializeAddress("addresses", "NETTEDX_NETTING_CONTRACT_ADDRESS", address(netting));
+
+        json = vm.serializeAddress("addresses", "NETTEDX_LIQUIDITY_BUFFER_CONTRACT_ADDRESS", address(liquidityBuffer));
+
+        vm.writeJson(json, filePath);
+
+        console2.log("Contract addresses written to:", filePath);
     }
 }

@@ -94,3 +94,99 @@ jobs:
           docker compose -f docker-compose.prod.yml up -d
 
           docker compose -f docker-compose.prod.yml ps
+
+          # =========================================================
+          # Update backend .env with deployed contract addresses
+          # =========================================================
+
+          ADDRESS_FILE="/opt/NettedX/NettedX-Blockchain/address-data/addresses.json"
+          ENV_FILE="/opt/NettedX/nettedx-back/.env"
+
+          echo "Reading contract addresses from ${ADDRESS_FILE}"
+
+          test -f "${ADDRESS_FILE}"
+
+          python3 - "${ADDRESS_FILE}" "${ENV_FILE}" <<'PY'
+          import json
+          import os
+          import sys
+          import tempfile
+
+          address_file = sys.argv[1]
+          env_file = sys.argv[2]
+
+          with open(address_file, "r") as f:
+              addresses = json.load(f)
+
+          keys = [
+              "NETTEDX_MOCK_USDC_CONTRACT_ADDRESS",
+              "NETTEDX_MOCK_BOND_CONTRACT_ADDRESS",
+              "NETTEDX_SETTLEMENT_CONTRACT_ADDRESS",
+              "NETTEDX_NETTING_CONTRACT_ADDRESS",
+              "NETTEDX_LIQUIDITY_BUFFER_CONTRACT_ADDRESS",
+          ]
+
+          # Validate all required addresses exist
+          for key in keys:
+              if key not in addresses:
+                  raise RuntimeError(
+                      f"Missing {key} in {address_file}"
+                  )
+
+              if not addresses[key]:
+                  raise RuntimeError(
+                      f"Empty value for {key}"
+                  )
+
+          with open(env_file, "r") as f:
+              lines = f.readlines()
+
+          updated = set()
+          result = []
+
+          for line in lines:
+              stripped = line.lstrip()
+
+              if "=" in line and not stripped.startswith("#"):
+                  key = line.split("=", 1)[0]
+
+                  if key in addresses and key in keys:
+                      result.append(f"{key}={addresses[key]}\n")
+                      updated.add(key)
+                      continue
+
+              result.append(line)
+
+          # Add missing keys
+          for key in keys:
+              if key not in updated:
+                  result.append(f"{key}={addresses[key]}\n")
+
+          # Atomic replacement of .env
+          directory = os.path.dirname(os.path.abspath(env_file))
+
+          fd, temp_file = tempfile.mkstemp(
+              dir=directory,
+              prefix=".env.",
+              text=True,
+          )
+
+          try:
+              with os.fdopen(fd, "w") as f:
+                  f.writelines(result)
+
+              os.replace(temp_file, env_file)
+          except Exception:
+              try:
+                  os.unlink(temp_file)
+              except FileNotFoundError:
+                  pass
+              raise
+
+          print("Updated contract addresses:")
+
+          for key in keys:
+              print(f"{key}={addresses[key]}")
+          PY
+
+          echo "Backend .env updated successfully."

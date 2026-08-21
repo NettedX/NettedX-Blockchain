@@ -6,6 +6,9 @@ COPY --chown=foundry:foundry . .
 
 RUN git config --global --add safe.directory /app
 
+# For data directory
+RUN mkdir -p /app/address-data
+
 RUN forge build
 
 RUN forge test
