@@ -4,8 +4,10 @@ services:
 
     container_name: ${ANVIL_CONTAINER_NAME}
 
-    command:
+    entrypoint:
       - anvil
+
+    command:
       - --host
       - 0.0.0.0
       - --port
@@ -19,8 +21,19 @@ services:
       - --mnemonic
       - ${ANVIL_MNEMONIC}
 
+      # 自动加载/保存区块链状态
+      - --state
+      - /var/data/anvil_state.json
+
+      # 每 10 秒自动保存一次
+      - --state-interval
+      - "10"
+
     ports:
       - "${ANVIL_PORT}:8545"
+
+    volumes:
+      - anvil-data:/var/data
 
     healthcheck:
       test:
@@ -48,9 +61,15 @@ services:
       RPC_URL: ${RPC_URL}
       PRIVATE_KEY: ${PRIVATE_KEY}
 
+    entrypoint:
+      - forge
+    
     command:
       - script
       - script/Deploy.s.sol
       - --rpc-url
       - ${RPC_URL}
       - --broadcast
+
+volumes:
+  anvil-data:
