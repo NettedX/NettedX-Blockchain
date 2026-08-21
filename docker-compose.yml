@@ -19,8 +19,12 @@ services:
       - ${ANVIL_BALANCE}
       - --mnemonic
       - ${ANVIL_MNEMONIC}
+
+      # 自动加载/保存区块链状态
       - --state
-      - /anvil-data/anvil-state
+      - /var/data/anvil_state.json
+
+      # 每 10 秒自动保存一次
       - --state-interval
       - "10"
 
@@ -28,7 +32,7 @@ services:
       - "${ANVIL_PORT}:${ANVIL_PORT}"
 
     volumes:
-      - anvil-data:/anvil-data
+      - anvil-data:/var/data
 
     healthcheck:
       test:
@@ -42,8 +46,28 @@ services:
       interval: 2s
       timeout: 3s
       retries: 10
-
   
+  deployer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ${DEPLOYER_CONTAINER_NAME}
+
+    depends_on:
+      anvil:
+        condition: service_healthy
+
+    environment:
+      RPC_URL: ${RPC_URL}
+      PRIVATE_KEY: ${PRIVATE_KEY}
+
+    command:
+      - script
+      - script/Deploy.s.sol
+      - --rpc-url
+      - ${RPC_URL}
+      - --broadcast
 
 volumes:
   anvil-data:
